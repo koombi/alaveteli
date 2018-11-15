@@ -793,45 +793,37 @@ class PublicBody < ActiveRecord::Base
     return bodies
   end
 
+  scope :preload_tags, lambda {
+    sub = HasTagString::HasTagStringTag.
+            select('has_tag_string_tags.model_id AS id').
+            select('json_object_agg(has_tag_string_tags.name, has_tag_string_tags.value)::jsonb AS tag_values').
+            where("has_tag_string_tags.model = 'PublicBody'").
+            group(1)
+    select('public_bodies.*').select('sub.*').
+      joins("LEFT JOIN (#{sub.to_sql}) sub ON (public_bodies.id = sub.id)")
+  }
+
   def self.with_tag(tag)
     return all if tag.size == 1 || tag.nil? || tag == 'all'
 
-    base_scope = HasTagString::HasTagStringTag.select('COUNT(*)').
-      where("has_tag_string_tags.model_id = #{table_name}.id").
-      where("has_tag_string_tags.model = '#{to_s}'")
-
-    # Restrict the public bodies shown according to the tag
-    # parameter supplied in the URL:
     if tag == 'other'
       tags = PublicBodyCategory.get.tags - ['other']
-      where('(' + base_scope.where(name: tags).to_sql + ') = 0')
+      preload_tags.where.not('tag_values ?| array[:tags]', tags: tags)
     elsif tag.include?(':')
       tag, value = HasTagString::HasTagStringTag.split_tag_into_name_value(tag)
-      where('(' + base_scope.where(name: tag, value: value).to_sql + ') > 0')
+      preload_tags.where('tag_values @> :json', json: { tag => value }.to_json)
     else
-      where('(' + base_scope.where(name: tag).to_sql + ') > 0')
+      preload_tags.where('tag_values ? :tag', tag: tag)
     end
   end
 
   def self.without_tag(tag)
-    # Generate a unique table alias for the has_tag_string_tags join so this
-    # scope can be chained to be used more than once
-    join_alias = aliased_table_for('tags')
-
     if tag.include?(':')
       tag, value = HasTagString::HasTagStringTag.split_tag_into_name_value(tag)
-      condition = "#{join_alias}.name = #{sanitize(tag)} AND " \
-        "#{join_alias}.value = #{sanitize(value)}"
+      preload_tags.where.not('tag_values @> :json', json: { tag => value }.to_json)
     else
-      condition = "#{join_alias}.name = #{sanitize(tag)}"
+      preload_tags.where.not('tag_values ? :tag', tag: tag)
     end
-
-    joins(
-      "LEFT JOIN has_tag_string_tags AS #{join_alias} ON " \
-      "#{join_alias}.model = '#{to_s}' AND " \
-      "#{join_alias}.model_id = #{table_name}.id AND " +
-      condition
-    ).where(join_alias => { id: nil })
   end
 
   def self.with_query(query, tag)
@@ -957,12 +949,5 @@ class PublicBody < ActiveRecord::Base
           result += " AND #{table}.locale = :locale"
         end
         result
-  end
-
-  def self.aliased_table_for(table)
-    # AliasTracker tracks SQL join table aliases so multiple joins can happen
-    # against the same table, see: https://github.com/rails/rails/blob/4-2-stable/activerecord/lib/active_record/associations/alias_tracker.rb
-    @alias_tracker ||= AliasTracker.empty connection
-    @alias_tracker.aliased_table_for(table, table).name
   end
 end
