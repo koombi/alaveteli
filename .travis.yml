@@ -29,6 +29,8 @@ matrix:
     - rvm: 2.5 # Latest official 2.5.x
     - rvm: ruby-head
     - gemfile: Gemfile.rails5
+addons:
+  postgresql: 9.4
 env:
   global:
     - S3_REGION=us-east-1
@@ -46,6 +48,8 @@ before_install:
   - sudo locale-gen --no-archive en_GB.UTF-8
   - sudo update-locale
   - git submodule update --init --recursive
+  - sudo /etc/init.d/postgresql stop
+  - sudo /etc/init.d/postgresql start 9.4
   - psql -c "create database template_utf8 template template0 encoding 'UTF-8';" -U postgres
   - psql -c "update pg_database set datistemplate=true where datname='template_utf8';" -U postgres
   - psql -c "create database foi_test template template_utf8;" -U postgres
