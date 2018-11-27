@@ -1682,6 +1682,12 @@ describe InfoRequest do
       it { is_expected.to include(guess) }
     end
 
+    context 'email with a broken id and an intact idhash but missing punctuation' do
+      let(:email) { "request123ab#{ info_request.idhash }@example.com" }
+      let(:guess) { described_class::Guess.new(info_request, email, :idhash) }
+      it { is_expected.to include(guess) }
+    end
+
     context 'email matching no requests' do
       let(:email) do
         invalid_id = described_class.maximum(:id) + 10
