@@ -1720,6 +1720,13 @@ describe InfoRequest do
       it { is_expected.to include(guess) }
     end
 
+    context 'email with a mangled id and missing punctuation' do
+      let(:info_request) { InfoRequest.find(101) }
+      let(:email) { 'request-loLabcdefgh@example.com' }
+      let(:guess) { described_class::Guess.new(info_request, email, :id) }
+      it { is_expected.to include(guess) }
+    end
+
     context 'email with a broken id and an intact idhash but broken format' do
       let(:email) { "reqeust=123ab#{ info_request.idhash }@example.com" }
       let(:guess) { described_class::Guess.new(info_request, email, :idhash) }
