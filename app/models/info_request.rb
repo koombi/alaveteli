@@ -239,7 +239,9 @@ class InfoRequest < ActiveRecord::Base
   def self.guess_by_incoming_email(*emails)
     guesses = emails.flatten.reduce([]) do |memo, email|
       id, idhash = _extract_id_hash_from_email(email)
-      idhash ||= _guess_idhash_from_email(email)
+      if idhash.nil? || id == 0
+        id, idhash = _guess_idhash_from_email(email)
+      end
       memo << Guess.new(find_by_id(id), email, :id)
       memo << Guess.new(find_by_idhash(idhash), email, :idhash)
     end
@@ -251,13 +253,18 @@ class InfoRequest < ActiveRecord::Base
   # Internal function used by guess_by_incoming_email
   def self._guess_idhash_from_email(incoming_email)
     incoming_email = incoming_email.downcase
-    if incoming_email.include?('@')
+    incoming_email =~ /request\-?(\w+)-?(\w{8})@/
+    id = $1
+    id_hash = $2
+    if id_hash.nil? && incoming_email.include?('@')
       # try to grab the last 8 chars of the local part of the address instead
       local_part = incoming_email[0..incoming_email.index('@')-1]
-      if local_part.length >= 8
-        _clean_idhash(local_part[-8..-1])
-      end
+      id_hash =
+        if local_part.length >= 8
+          _clean_idhash(local_part[-8..-1])
+        end
     end
+    [id, id_hash]
   end
 
   # Internal function used to clean the id_hash from incoming email addresses.
