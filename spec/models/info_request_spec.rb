@@ -1677,13 +1677,13 @@ describe InfoRequest do
     end
 
     context 'email with a broken id and an intact idhash' do
-      let(:email) { "request-123ab-#{ info_request.idhash }@example.com" }
+      let(:email) { "request-ab123-#{ info_request.idhash }@example.com" }
       let(:guess) { described_class::Guess.new(info_request, email, :idhash) }
       it { is_expected.to include(guess) }
     end
 
     context 'upper case email with a broken id and otherwise intact idhash' do
-      let(:email) { "REQUEST-123a-#{ info_request.idhash.upcase }@example.com" }
+      let(:email) { "REQUEST-a123-#{ info_request.idhash.upcase }@example.com" }
       let(:guess) { described_class::Guess.new(info_request, email, :idhash) }
       it { is_expected.to include(guess) }
     end
@@ -1709,7 +1709,7 @@ describe InfoRequest do
     end
 
     context 'email with a broken id and an intact idhash but missing punctuation' do
-      let(:email) { "request123ab#{ info_request.idhash }@example.com" }
+      let(:email) { "requestab123#{ info_request.idhash }@example.com" }
       let(:guess) { described_class::Guess.new(info_request, email, :idhash) }
       it { is_expected.to include(guess) }
     end
@@ -1728,7 +1728,7 @@ describe InfoRequest do
     end
 
     context 'email with a broken id and an intact idhash but broken format' do
-      let(:email) { "reqeust=123ab#{ info_request.idhash }@example.com" }
+      let(:email) { "reqeust=ab123#{ info_request.idhash }@example.com" }
       let(:guess) { described_class::Guess.new(info_request, email, :idhash) }
       it { is_expected.to include(guess) }
     end
@@ -1761,7 +1761,7 @@ describe InfoRequest do
     end
 
     context 'when passed multiple emails matching a single request' do
-      let(:email_1) { "request-123ab-#{ info_request.idhash }@example.com" }
+      let(:email_1) { "request-ab123-#{ info_request.idhash }@example.com" }
       let(:email_2) { "request-#{ info_request.id }-asdfg@example.com" }
       let(:email) { [email_1, email_2] }
       let(:guess) { described_class::Guess.new(info_request, email_1, :idhash) }
