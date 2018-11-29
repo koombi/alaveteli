@@ -254,7 +254,7 @@ class InfoRequest < ActiveRecord::Base
   def self._guess_idhash_from_email(incoming_email)
     incoming_email = incoming_email.downcase
     incoming_email =~ /request\-?(\w+)-?(\w{8})@/
-    id = $1
+    id = $1.to_i
     id_hash = $2
     if id_hash.nil? && incoming_email.include?('@')
       # try to grab the last 8 chars of the local part of the address instead
