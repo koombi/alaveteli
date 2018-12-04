@@ -10,10 +10,10 @@ class RequestMailer < ApplicationMailer
 
   before_action :set_use_footer,
                 :only => [
-                  :requires_admin, :new_response, :overdue_alert,
-                  :very_overdue_alert, :new_response_reminder_alert,
-                  :old_unclassified_updated, :not_clarified_alert,
-                  :comment_on_alert, :comment_on_alert_plural
+                  :new_response, :overdue_alert, :very_overdue_alert,
+                  :new_response_reminder_alert, :old_unclassified_updated,
+                  :not_clarified_alert, :comment_on_alert,
+                  :comment_on_alert_plural
                 ]
 
   # Used when an FOI officer uploads a response from their web browser - this is
